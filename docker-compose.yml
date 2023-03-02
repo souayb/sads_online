@@ -1,0 +1,10 @@
+# version: "1.0"
+services:
+  app: 
+    build: .
+    container_name: sads_stream
+    command: streamlit run --server.headless true --server.port 8500 stream_test.py 
+    ports:
+      - 8000:8500
+    volumes:
+      - .:/app

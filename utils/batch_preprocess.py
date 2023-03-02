@@ -1,5 +1,4 @@
 import pandas as pd
-import streamlit as st
 
 class Preprocessing:
     """Class for preparing welding sequence data for ML"""
@@ -46,8 +45,7 @@ class Preprocessing:
     def _get_good_bad(self, df: pd.DataFrame):
         df['anomaly'] = df.duplicated(subset=['BarCode','Face_Cell_Point'], keep='last')
         return df
-    
-    @st.cache(suppress_st_warning= True)
+
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
         # df_out = self.apply_filter(df)
         df_out = self._clean_weld_data(df, self.time_col)
