@@ -11,7 +11,7 @@ from itertools import count
 # from data_process import Preprocessing
 import pandas as pd
 import plotly.express as px
-from batch_preprocess import Preprocessing
+# from batch_preprocess import Preprocessing
 from joblib import dump, load
 import seaborn as sns
 from matplotlib.colors import ListedColormap
@@ -129,7 +129,7 @@ def run():
         st.subheader('Chart and Pack control')
         with st.expander('Chart and Pack control'):
             
-            st.subheader("Chart control")
+            st.subheader("Chart control Control")
             # feature to be display in the Pack tab
             feature = st.selectbox("Feature to be display", ['Joules', 'Charge', 'Residue', 'Force_N', 'Force_N_1'], index=0)
             max_x = st.slider ( "select the max length of scatter plot", min_value=112, max_value=10 * 448, step=112,
