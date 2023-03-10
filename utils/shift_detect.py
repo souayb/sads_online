@@ -12,6 +12,10 @@ from __future__ import division
 import numpy as np
 from scipy.stats import rankdata
 from collections import namedtuple
+from scipy.stats import wasserstein_distance, entropy
+from pdb import set_trace
+
+
 
 
 # Supporting Functions
@@ -329,3 +333,36 @@ def buishand_u_test(x, alpha = 0.05, sim = 20000):
     h, cp, p, U, mu = __test(__buishand_u, x, alpha, sim)
 
     return res(h, cp, p, U, mu)
+
+
+def wasser_KL_test(hist_data, current_data, threshold = 0.1):
+    """
+    This function checks distribution drift using Wasserstein distance and KL divergence proposed in T. A. Buishand (1984).
+    Input:
+        hist_data: a vector (list, numpy array or pandas series) historical data
+        current_data: a vector (list, numpy array or pandas series) current data
+        threshold: threshold for detecting distribution drift (default 0.1)
+    output:
+        drift: True (if distribution drift is detected) or False (if distribution drift is not detected)
+        wasserstein_dist: Wasserstein distance between the historical and current distributions
+        kl_divergence: KL divergence between the historical and current distributions
+    Examples
+    --------
+      >>> import pyhomogeneity as hg
+      >>> hist_data = np.random.rand(1000)
+      >>> current_data = np.random.rand(1000)
+      >>> drift = hg.wasser_KL_test(hist_data, current_data)
+    """
+    # set_trace()
+    res = namedtuple('Wasser_KL_Test', ['drift', 'wasserstein_dist', 'kl_divergence'])
+    drift = False
+    hist_data, current_data = np.array(hist_data),np.array(current_data)
+
+    wasserstein_dist = wasserstein_distance(hist_data, current_data)
+    kl_divergence = entropy(hist_data, current_data)
+
+    if wasserstein_dist > threshold or kl_divergence > threshold:
+        drift = True
+
+    return res(drift, wasserstein_dist, kl_divergence)
+

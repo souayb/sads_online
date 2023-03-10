@@ -20,23 +20,11 @@ from kalman import DiscreteKalmanFilter
 from collections import defaultdict, deque
 import utils
 
-SMALL_SIZE = 5
-MEDIUM_SIZE =5
-BIGGER_SIZE = 5
-# plt.rcParams['figure.figsize'] = (5, 10)
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE, dpi=600)  # fontsize of the figure title
-plt.style.context('bmh')
 
-WINDOW_SIZE = 10
+st.set_page_config ( layout="wide" )
 
 def run():
-    st.set_page_config ( layout="wide" )  # setting the display in the
+    # st.set_page_config ( layout="wide" )  # setting the display in the
     hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -49,8 +37,24 @@ def run():
     st.markdown ( hide_menu_style, unsafe_allow_html=True )
 
     new_title = '<center> <h2> <p style="font-family:fantasy; color:#82270c; font-size: 24px;"> SADS: Shop-floor Anomaly Detection Service: Online mode </p> </h2></center>'
-
+    info = st.empty()
     st.markdown(new_title, unsafe_allow_html=True)
+
+
+    SMALL_SIZE = 5
+    MEDIUM_SIZE =5
+    BIGGER_SIZE = 5
+    # plt.rcParams['figure.figsize'] = (5, 10)
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE, dpi=600)  # fontsize of the figure title
+    plt.style.context('bmh')
+
+    WINDOW_SIZE = 10
 
     # st.title ( "SADS: Shop floor Anomaly Detection Service" )
 
@@ -105,7 +109,6 @@ def run():
             optim.step()
         return model 
     def kalman_forecast(model , y, forecast_steps:int=448) -> tuple:
-        print(f"INININININ type{type(y)} {y}" )
         pred_mu_1, pred_sigma_1, x, P = model.iterate_disc_sequence(torch.Tensor(y))#iterate_disc_sequence(torch.Tensor(y))
         pred_mu_2, pred_sigma_2 = model.forecasting(forecast_steps, x, P) 
         # pred_mu = torch.cat([pred_mu_1, pred_mu_2]).detach().cpu().numpy()
@@ -120,74 +123,59 @@ def run():
     # df = pd.read_csv(dataPath)
     # st.write(df.columns)
     data = data_reader(dataPath=dataPath)
-    
+#######################################################################
 
-##########################  SIDEBAR #######################################
-    ######## Tabs informations 
 
     with st.sidebar.container():
-        st.subheader('Chart and Pack control')
-        with st.expander('Chart and Pack control'):
-            
-            st.subheader("Chart control Control")
-            # feature to be display in the Pack tab
-            feature = st.selectbox("Feature to be display", ['Joules', 'Charge', 'Residue', 'Force_N', 'Force_N_1'], index=0)
-            max_x = st.slider ( "select the max length of scatter plot", min_value=112, max_value=10 * 448, step=112,
-                                key='max_length' )
-            st.text("___")
+        with st.form(key='my_form'):
+            with st.expander('Chart and Pack control'):
+                st.subheader('Chart and Pack control')
+                
+                feature = st.selectbox("Feature to be display", ['Joules', 'Charge', 'Residue', 'Force_N', 'Force_N_1'], index=0)
+                max_x = st.slider ( "Select the max length for scatter plot", min_value=112, max_value=10 * 448, step=112,
+                                    key='max_lenh' )
 
-            st.subheader("")
+                # st.subheader("Table control input")
+            with st.expander("Model control"):
+                st.subheader('Model Control')
 
-    ##################################### END ##########################
+                model_choice = st.selectbox (
+                    "Choose the model",
+                    ("Isolation Forest","Random Forest", "Thresholding") )
+                
+                drift_model = st.selectbox (
+                    "Choose the Data shift detector",
+                    ("Wasserschein distance","Petite", "Mean averaging") )
+                
+                forecast_lenght = st.slider ( "Forecasting steps", min_value=1, max_value=448, step=1,
+                                            key='forecast_length' )
+                
 
-    ############## MODEL INPUT INFORMATION ##########################
+            # submitted = st.form_submit_button('Apply')
 
-    SADA_settings = st.sidebar.form ( "SADS" )
-    SADA_settings.title ( "SADS models" )
+            stop_bt, rerun_bt, show_bt = st.columns ( (1, 1, 1) )
+            SADS_submit = show_bt.form_submit_button ( "Start" )
+            stop_submit = stop_bt.form_submit_button ( "Stop" )
+            rerun_submit = rerun_bt.form_submit_button ( "Rerun" )
 
-    with st.sidebar.form ( "Models" ):
-        st.title ( "SADS models" )
-        train_model = st.form_submit_button ( "train model" )
-        show_validation = st.checkbox ( 'show train and validation error' )
+            with st.expander('See instructions'):
+                st.subheader("Plot setting")
+                st.markdown ( """
+                - Forecasting steps: Maximum length of the plot
+                - Stop: Stop the simulation
+                -
+                - Choose the model :
+                    - ***Repeat***: Model based on the repeated labeling method
+                        - Labeling strategy provided by the WAM technik
+                    - ***Iforest***: Model base on Isolation forest labeling method
+                        - Unsupervised labeling mechanisme for anomalies. A clustering based method
 
-    # max_x = SADA_settings.slider ( "Max length of the scatter", min_value=112, max_value=10 * 448, step=112,
-    #                                key='max_length' )
-
-
-    model_choice = SADA_settings.selectbox (
-        "Choose the model",
-        ("Isolation Forest","Random Forest", "Thresholding") )
- 
-    stop_bt, rerun_bt, show_bt = SADA_settings.columns ( (1, 1, 1) )
-    SADS_submit = show_bt.form_submit_button ( "Start" )
-    stop_submit = stop_bt.form_submit_button ( "Stop" )
-    rerun_submit = rerun_bt.form_submit_button ( "Rerun" )
-
-    if rerun_submit:
-        st.experimental_rerun ()
-    if stop_submit:
-        st.stop ()
-
-    SADS_info = SADA_settings.expander ( "See explanation" )
-    SADS_info.markdown ( """
-    - Max length of the scatter: Maximum length of the plot
-    - Stop: Stop the simulation
-    -
-    - Choose the model :
-        - ***Repeat***: Model based on the repeated labeling method
-            - Labeling strategy provided by the WAM technik
-        - ***Iforest***: Model base on Isolation forest labeling method
-            - Unsupervised labeling mechanisme for anomalies. A clustering based method
-
-            """ )
-    
-
- 
-        
+                        """ )
+                
     ######################### SETING UP THE TABS ########################################
 
     counter = count ( 0 )
-    pack_view, table_view, chart_view = st.tabs(["Battery Pack", "🗃Table", "📈 Charts"])
+    pack_view, table_view, chart_view = st.tabs(["Pack", "🗃Table", "📈 Charts"])
     
     # display 
     joul_title = '<center> <h2> <p style="font-family:fantasy; color:#82270c; font-size: 24px;"> Display the output joules </p> </h2></center>'
@@ -275,26 +263,38 @@ def run():
                 df_chart['anomaly'] = answer
             else:
                 if old_bar != bar:
-                    print('new bar start recording')
                     record_new = True
                     old_bar = bar
                 if not record_new:
-                    result_old.append(to_predict['Joules'].to_list())
+                    result_old.append(to_predict['Joules'].to_list()[0])
                     result_old_bar.append(bar)
                 else :
-                    result_new.append(to_predict['Joules'].to_list())
+                    result_new.append(to_predict['Joules'].to_list()[0])
                     result_new_bar.append(bar)
 
-                #### now testing the shif ##################
+                #### now testing the shift hapanned ##################
 
-                # if len(result_new) == WINDOW_SIZE and record_new:
-                #     record_new = False
-                #     to_test.extend(result_old)
-                #     to_test.extend(result_new)
-                #     to_test_bar.extend(result_old_bar)
-                #     to_test_bar.extend(result_new_bar)
-                #     res = pettitt_test(to_test, alpha=0.8)
+                if len(result_new) == WINDOW_SIZE and record_new:
+                    record_new = False
 
+                    if drift_model == "Wasserschein distance":
+                        res = utils.wasser_KL_test(result_old, result_new, threshold=0.1)
+                        if res.drift:
+                            info.info("Shift detected, Need to retrain the model: Wasserstein distance + KL divergence")
+                            info.empty()
+                    elif drift_model == 'Petite':
+                        to_test = deque(maxlen=WINDOW_SIZE*2)
+                        to_test.extend(result_old)
+                        to_test.extend(result_new)
+                        res = utils.pettitt_test(to_test, alpha=0.8)
+                        if res.cp > WINDOW_SIZE -1 and res.cp < WINDOW_SIZE +1:
+                            info.info("Shift detected, Need to retrain the model: method PETTITE")
+                   
+                    
+                    result_old.extend(result_new)
+                    result_new = deque(maxlen=WINDOW_SIZE)
+                    result_new_bar = deque(maxlen=WINDOW_SIZE)
+                    
             ####################################### END #######################################
                 df_new = to_predict.copy()
                 df_new['anomaly'] = answer
@@ -473,7 +473,6 @@ def run():
 
             face_1_cp_mask = face_1_maske.reshape(14, 16)
             face_2_cp_mask = face_2_maske.reshape(14, 16)
-            # print(face_1_cp)
 
             fig_pack_1, face_ax_1 = plt.subplots (nrows=2, ncols=1, figsize=(5, 5) )
             fig_pack_2, face_ax_2 = plt.subplots ( nrows=2, ncols=1,  figsize=(5, 5) )
@@ -512,17 +511,14 @@ def run():
             mu, sigma, kl_model = kalman_forecast(model=kl_model, y=rr, forecast_steps=1)
             # mu, sigma = kalman_forecast(kl_model, rr, forecast_steps=max_forecast)
             # set_trace()
-            print(mu.shape, sigma[:,:,0].shape,rr[:,0].shape)
             
             result = np.hstack([mu, sigma[:,:,0],rr[:,0].reshape(-1,1)])
-            # print('result.shape', result.shape)
             if time_count==0:
                 df_fif = pd.DataFrame(data=result, columns=kalman_col)
             else :
                 df_new = pd.DataFrame(data=result, columns=kalman_col)
                 df_fif = pd.concat([df_fif, df_new], ignore_index=True)
             df_forecate = df_fif[-max_x:]
-            print(df_forecate.shape)
             fig = go.Figure([
                     go.Scatter(
                         name='Forecast',
@@ -563,7 +559,7 @@ def run():
                 ]) 
                 
             kalman_view.plotly_chart(fig, use_container_width=True)
-            time.sleep ( 1 )
+            time.sleep ( 0.1)
 
 if __name__ == '__main__':
     run()
